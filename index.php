@@ -38,13 +38,13 @@ $memcache->connect('localhost', 11211);
             //Если запрос корректен, то выводим информацию по городу и дате
             else
             {
-             //Записываем данные по городу и дате в переменную, которая является значением ключа хэша
-            $info ="<br>Вы выбрали город: ".$xml->request->query->asXML()."<br>Вы выбрали дату: ".$xml->weather[0]->date->asXML()."<br>Максимальная температура в этот день: ".$xml->weather[0]->tempMaxC->asXML()."<br>Минимальная температура в этот день: ".$xml->weather[0]->tempMinC->asXML();
-            $set = $memcache->set($key, $info);
-            echo "<br>Вы выбрали город: ".$xml->request->query;
-            echo "<br>Вы выбрали дату: ".$xml->weather->date;
-            echo "<br>Максимальная температура в этот день: ".$xml->weather->tempMaxC;
-            echo "<br>Минимальная температура в этот день: ".$xml->weather->tempMinC;
+                 //Записываем данные по городу и дате в переменную, которая является значением ключа хэша
+                $info ="<br>Вы выбрали город: ".$xml->request->query->asXML()."<br>Вы выбрали дату: ".$xml->weather[0]->date->asXML()."<br>Максимальная температура в этот день: ".$xml->weather[0]->tempMaxC->asXML()."<br>Минимальная температура в этот день: ".$xml->weather[0]->tempMinC->asXML();
+                $set = $memcache->set($key, $info);
+                echo "<br>Вы выбрали город: ".$xml->request->query;
+                echo "<br>Вы выбрали дату: ".$xml->weather->date;
+                echo "<br>Максимальная температура в этот день: ".$xml->weather->tempMaxC;
+                echo "<br>Минимальная температура в этот день: ".$xml->weather->tempMinC;
             }
         }
     }
