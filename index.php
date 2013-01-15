@@ -31,7 +31,7 @@ if (isset($_REQUEST['ok']))
     $town = $_POST['town'];
     $date = $_POST['date'];
     $key = $date.$town;
-        //Подключаемся к первому серверу
+	//Подключаемся к первому серверу
     $memcache -> connect($server_1, 11211);
     //Получаем данные из кэша
     $info = $memcache -> get($key);
@@ -117,5 +117,5 @@ if (isset($_REQUEST['ok']))
     }
 }
 ?>
-</body>
+	</body>
 </html>
