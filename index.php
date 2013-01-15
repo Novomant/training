@@ -3,7 +3,7 @@
         <head>
             <title>Погода</title>
         </head>
-    <body>
+	<body>
         <form method="POST" action="/">
             Город: <input type="text" name="town">
             <br>
@@ -31,10 +31,10 @@ if (isset($_REQUEST['ok']))
     $town = $_POST['town'];
     $date = $_POST['date'];
     $key = $date.$town;
-	//Подключаемся к первому серверу
+    //Подключаемся к первому серверу
     $memcache -> connect($server_1, 11211);
     //Получаем данные из кэша
-    $info = $memcache -> get($key);
+	$info = $memcache -> get($key);
 	//Если данных нет на первом сервере, то обращаемся к остальным, по очереди
 	if (!$info)
 	{
