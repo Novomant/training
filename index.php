@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html>
-        <head>
-            <title>Погода</title>
-        </head>
+		<head>
+			<title>Погода</title>
+		</head>
 	<body>
-        <form method="POST" action="/">
-            Город: <input type="text" name="town">
-            <br>
-            Дата в формате ГГГГ-ММ-ДД: <input type="text" name="date">
-            <br><br>
-            <input type="submit" name="ok" value="Отправить">
-        </form>
+		<form method="POST" action="/">
+			Город: <input type="text" name="town">
+			<br>
+			Дата в формате ГГГГ-ММ-ДД: <input type="text" name="date">
+			<br><br>
+			<input type="submit" name="ok" value="Отправить">
+		</form>
 <?php
 if (isset($_REQUEST['ok']))
 {
-    //Проверяем, установлен ли Memcache
+	//Проверяем, установлен ли Memcache
     if (!class_exists('Memcache'))
     {
         echo "Расширение Memcache не установлено.";
