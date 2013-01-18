@@ -14,70 +14,56 @@
 <?php
 if (isset($_REQUEST['ok']))
 {
-	//Проверяем, установлен ли Memcache
-	if (!class_exists('Memcache'))
-	{
-		echo "Расширение Memcache не установлено.";
-	}
-	else
-	{
-		echo "Расширение Memcache установлено";
-	}
-	//Подключаем расширение Memcache
-	$memcache = new Memcache;
-	//Подключаем список серверов
-	include 'servers.php';
 	//Устанавливаем уникальное значение ключа для кэша (город+дата)
 	$town = $_POST['town'];
 	$date = $_POST['date'];
 	$key = $date.$town;
-	//Подключаемся к первому серверу
-	$memcache -> connect($server_1, 11211);
-	//Получаем данные из кэша
-	$info = $memcache -> get($key);
-	//Если данных нет на первом сервере, то обращаемся к остальным, по очереди
-	if (!$info)
+	//Определяем, работает ли Memcache
+	if (!class_exists('Memcache'))
 	{
-		$memcache -> connect($server_2, 11211);
-		$info = $memcache -> get($key);
-		if (!$info)
+		$isWorksServer=false;
+	}
+	else
+	{
+		$isWorksServer=true;
+		//Подключаем расширение Memcache
+		$memcache = new Memcache;
+		//Подключаем список серверов
+		include 'servers.php';
+		//Получаем последний элемент массива
+		$endServer=end($servers);
+		//Подключаемся к каждому серверу по очереди. Если данные ключа заполнились или достигнут последний элемент массива, то прерываем цикл
+		for (reset($servers); is_array($servers); next($servers))
 		{
-			$memcache -> connect($server_3, 11211);
+			$memcache -> connect(current($servers), 11211);
 			$info = $memcache -> get($key);
-			if (!$info)
+			if (!$info or $endServer == current($servers))
 			{
-				$memcache -> connect($server_4, 11211);
-				$info = $memcache -> get($key);
+				break;
 			}
 		}
 	}
-
-    //Если кэш всех серверов пуст, делаем запрос на сервер погоды
-    if (!$info)
+    //Если кэш всех серверов пуст или Memcache не работает, то делаем запрос на сервер погоды
+    if (!$info or $isWorksServer==false)
     {
-		//Подключаемся к случайному серверу для записи данных
-		$rand = rand(1, 4);
-		if ($rand == 1)
-		{
-			$memcache -> connect($server_1, 11211);
-		}
-		if ($rand == 2)
-		{
-			$memcache -> connect($server_2, 11211);
-		}
-		if ($rand == 3)
-		{
-			$memcache -> connect($server_3, 11211);
-		}
-		if ($rand == 4)
-		{
-			$memcache -> connect($server_4, 11211);
-		}
-	$xmlStr = file_get_contents('http://free.worldweatheronline.com/feed/weather.ashx?cc=no&num_of_days=2&q='.$town.'&date='.$date.'&key=50635796a4181608121312&format=xml');
+	    $xmlStr = file_get_contents('http://free.worldweatheronline.com/feed/weather.ashx?cc=no&num_of_days=2&q='.$town.'&date='.$date.'&key=50635796a4181608121312&format=xml');
 	//Превращаем полученную строку xml в объект
         $xml = simplexml_load_string($xmlStr);
-        //Создаем массив, значения которого запишутся в ключ переменной для кэша
-        $info = array(
+		//Массив с ошибками
+		$info = array (
+			"error_1" => $xml->weather[1],
+            "error_2" => $xml->error->msg
+		);
+		$isErrorData = (isset($info["error_1"]) or isset($info["error_2"]));
+		// Если ошибка есть
+		if ($isErrorData)
+		{
+			echo "Ошибка! Неправильно введена дата или города нет в базе данных";
+		}
+		//Если ошибки нет
+        if (!$isErrorData)
+			//Создаем массив, значения которого запишутся в ключ переменной для кэша
+			$info = array(
             "town" => $xml->request->query->asXML(),
             "date" => $xml->weather[0]->date->asXML(),
             "error_1" => $xml->weather[1],
@@ -87,20 +73,26 @@ if (isset($_REQUEST['ok']))
         );
         unset($xml);
 
-        // Проверим, нет ли ошибки в данных
-        $isErrorData = (isset($info["error_1"]) || isset($info["error_2"]));
-        // Если в данных полученных с сервера нет ошибки - сохраним их
-        if (!$isErrorData)
+        // Если в данных полученных с сервера нет ошибки и Memcache работает - сохраним их на случайном и последнем подключенном сервере.
+        if (!$isErrorData and $isWorksServer==true)
         {
-            //записываем данные по городу и дате в переменную, которая является значением ключа кэша
-            $set = $memcache->set($key, $info, 604000);
+            //Рандом для сервера, к которому будем подключаться
+            $maxServ = count($servers)-1;
+			$randServ = rand (0, $maxServ);
+            //Если рандом не выпал на последний сервер (к которому мы уже подключены), то отключаемся от него
+			if ($maxServ != $randServ)
+			{
+				$memcache->close($servers["$maxServ"]);
+			}
+            //Если рандом на любом сервере, кроме последнего, то подключаемся к нему
+            else
+            {
+                $memcache -> connect($servers["$randServ"], 11211);
+                //записываем данные по городу и дате в переменную, которая является значением ключа кэша
+                $set = $memcache->set($key, $info, 604000);
+            }
         }
-    }
-    else
-    {
-        // В данных полученных из кеша ошибки быть не может, мы их туда просто не сохраняем.
-        $isErrorData = false;
-    }
+	}
 
     // Если в данных полученные из кеша либо с сервера нет ошибки - выведем их
     if (!$isErrorData)
@@ -109,11 +101,6 @@ if (isset($_REQUEST['ok']))
         echo "<br>Вы выбрали дату: ".$info["date"];
         echo "<br>Максимальная температура в этот день: ".$info["t_max"];
         echo "<br>Минимальная температура в этот день: ".$info["t_min"];
-    }
-    // Если есть ошибка - выведем ее
-    else
-    {
-        echo "Ошибка! Неправильно введена дата или города нет в базе данных";
     }
 }
 ?>
