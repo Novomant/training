@@ -79,10 +79,10 @@ if (isset($_REQUEST['ok']))
 			if ($maxServ != $randServ)
 			{
 				$memcache->close($servers[$maxServ]);
-                $memcache -> connect($servers[$randServ], 11211);
+				$memcache -> connect($servers[$randServ], 11211);
 			}
-            //Записываем данные в кэш
-            $set = $memcache->set($key, $info, 604000);
+			//Записываем данные в кэш
+			$set = $memcache->set($key, $info, 604000);
 		}
 	}
 
