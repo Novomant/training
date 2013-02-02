@@ -1,52 +1,31 @@
 <!DOCTYPE html>
 <html>
 		<head>
-			<title>Погода</title>
+			<title>Погода на завтра</title>
 		</head>
 	<body>
-		<h1 align="center">Узнай погоду на 7 дней вперед в любой день и в любом городе</h1>
-			<form method="POST" action="weather.php">
-				Город: <input type="text" name="town">
-				<br>
-				Дата в формате ГГГГ-ММ-ДД: <input type="text" name="date">
-				<br><br>
-				<input type="submit" name="ok" value="Отправить">
-			</form>
-<?php
+		<h1 align="center">Узнай погоду на завтра в своем городе</h1>
+			<p>Завтра
+				<?
+				$dateTomorrow=new DateTime('+1 days');
+				$dateTomorrowString=date_format($dateTomorrow, 'Y-m-d');
+				echo $dateTomorrowString;
+				?>
+			</p>
+				<form method="POST" action="tomorrow.php">
+					Укажите ваш город: <input type="text" name="town">
+					<br><br>
+					<input type="submit" name="ok" value="Отправить">
+				</form>
+<?
 if (isset($_REQUEST['ok']))
 {
 	$town = $_POST['town'];
-	$date = $_POST['date'];
-	$del = explode("-", $date);
+	//Устанавливаем уникальное значение ключа для кэша (город)
+	$key = $town.$dateTomorrowString;
+	$del = explode("-", $dateTomorrowString);
 	// Распределяем по переменным
 	list ($year, $month, $day) = $del;
-	//Устанавливаем уникальное значение ключа для кэша (город+дата)
-	$key = $date.$town;
-
-	//Создаем объект с исключением (если объект не создался) - фиксируем ошибку, содержащий текущий год, месяц и число
-	try
-	{
-		$dateUser = new DateTime($date);
-	}
-	catch (Exception $e)
-	{
-		$isErrorIncorrectDate=true;
-	}
-
-	//Объект с текущей датой
-	$dateToday = new DateTime();
-	date_time_set($dateToday, 00, 00, 00);
-	//Добавляем к текущей дате 7 дней
-	$date7 = new DateTime('+7 days');
-	//Если дата пользователя меньше или равна на 7 дней вперед и больше или равна текущей дате, то ошибки нет
-	if ($dateUser<=$date7 and $dateUser>=$dateToday)
-	{
-		$isErrorData=false;
-	}
-	else
-	{
-		$isErrorData=true;;
-	}
 
 	//Определяем, работает ли Memcache
 	if (!class_exists('Memcache'))
@@ -69,13 +48,14 @@ if (isset($_REQUEST['ok']))
 			$info = $memcache -> get($key);
 		}
 	}
+
 	//Если кэш всех серверов пуст или Memcache не работает, то делаем запрос на сервер погоды
 	if (!$info or $isWorksServer==false)
 	{
 		//Список Api
 		$apiUrl=array(
 			'http://dev.4otaku.ru/weather.php?city='.$town.'&year='.$year.'&month='.$month.'&day='.$day.'',
-			'http://free.worldweatheronline.com/feed/weather.ashx?cc=no&num_of_days=2&q='.$town.'&date='.$date.'&key=50635796a4181608121312&format=xml'
+			'http://free.worldweatheronline.com/feed/weather.ashx?cc=no&num_of_days=2&q='.$town.'&date='.$dateTomorrowString.'&key=50635796a4181608121312&format=xml'
 		);
 		//Получаем данные с сервера погоды, выбранного случайно и только в случае, если запрошенный город не иностранный
 		for (true; !isset($loadApi) or $loadApi=="Fuck off, capitalist pig!"; $loadApi=file_get_contents ($apiUrl[$randApi]))
@@ -90,7 +70,6 @@ if (isset($_REQUEST['ok']))
 			//Заполняем массив данными
 			$info = array(
 				"town" => $town,
-				"date" => $date,
 				"t_max" => $json->{'Max'},
 				"t_min" => $json->{'Min'});
 			//Переводим температуру в шкалу Цельсия
@@ -115,7 +94,6 @@ if (isset($_REQUEST['ok']))
 			{
 				$info = array(
 					"town" => $xml->request->query->asXML(),
-					"date" => $xml->weather[0]->date->asXML(),
 					"t_max" => $xml->weather->tempMaxC->asXML(),
 					"t_min" => $xml->weather->tempMinC->asXML());
 				unset($xml);
@@ -123,12 +101,12 @@ if (isset($_REQUEST['ok']))
 		}
 
 		// Если есть ошибки, то выводим предупреждение
-		if ($isErrorData or $isErrorIncorrectDate)
+		if ($isErrorData)
 		{
-			echo "Ошибка! Неправильно введена дата или города нет в базе данных";
+			echo "Ошибка! Города нет в базе данных";
 		}
-		// Если в данных полученных с сервера нет ошибки, дата введена правильно и Memcache работает - сохраним их на случайном и последнем подключенном сервере
-		if (!$isErrorData and !$isErrorIncorrectDate and $isWorksServer==true)
+		// Если в данных полученных с сервера нет ошибки и Memcache работает - сохраним их на случайном и последнем подключенном сервере
+		if (!$isErrorData and $isWorksServer==true)
 		{
 			//Рандом для сервера, к которому будем подключаться
 			$maxServ = count($servers)-1;
@@ -139,15 +117,14 @@ if (isset($_REQUEST['ok']))
 				$memcache->close($servers[$maxServ]);
 				$memcache -> connect($servers[$randServ], 11211);
 			}
-			//Записываем данные в кэш и храним эти данные неделю
-			$set = $memcache->set($key, $info, 604000);
+			//Записываем данные в кэш и храним эти данные сутки
+			$set = $memcache->set($key, $info, 86400);
 		}
 	}
-	// Если в данных полученные из кэша либо с сервера нет ошибки и дата изначально введена коректно - выведем их
-	if (!$isErrorData and !$isErrorIncorrectDate)
+	// Если в данных полученные из кэша либо с сервера нет ошибки - выведем их
+	if (!$isErrorData)
 	{
 		echo "<br>Вы выбрали город: ".$info["town"];
-		echo "<br>Вы выбрали дату: ".$info["date"];
 		echo "<br>Максимальная температура в этот день: ".$info["t_max"];
 		echo "<br>Минимальная температура в этот день: ".$info["t_min"];
 	}
