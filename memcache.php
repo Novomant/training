@@ -12,7 +12,7 @@ else
     $memcache->set('rand', $rand, 600);
 
     echo "<br>Случайное число записано в хеш. Число равно: ".$rand;
-    $get = $memcache ->get('rand');
+    $get = $memcache->get('rand');
 
     echo "<br> Получаем данные из хэша. Случайное число равно: ".$get;
 }
