@@ -27,6 +27,7 @@ if (isset($_REQUEST['ok']))
 	try
 	{
 		$dateUser = new DateTime($date);
+		$isErrorIncorrectDate=false;
 	}
 	catch (Exception $e)
 	{
