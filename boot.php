@@ -1,22 +1,21 @@
 <?php
-class MyClass
+class index
 {
-	const ConstValue = 'Значение константы';
-}
-
-class OtherClass extends MyClass
-{
-	public static $my_static = 'Статическая переменная';
-
-	public static function doubleColon()
+	function outIndex()
 	{
-		echo parent::ConstValue."<br>";
-		echo self::$my_static."<br>";
+		include 'index.php';
 	}
 }
+echo $_SERVER['REQUEST_URI'];
+$objIndex = new index();
+$url = $_SERVER['REQUEST_URI'];
+if ($url=='/training/')
+{
+	$objIndex->outIndex();
+}
+if ($url=='/training/today.php')
+{
+	include 'indexClass.php';
+}
 
-$classname = 'OtherClass';
-echo $classname::doubleColon();
-
-OtherClass::doubleColon();
 ?>
