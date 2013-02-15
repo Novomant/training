@@ -1,11 +1,22 @@
 <?php
-class Test
+class Index
 {
-	function disp()
+	function loadPageIndex()
 	{
-		echo "тест";
+		include 'index.php';
 	}
 }
-$obj = new Test();
-$obj->disp();
+
+class BaseWeather
+{
+	public $town='test';
+}
+
+class WeatherToday extends BaseWeather
+{
+	public function InputValue()
+	{
+	parent::InputTown();
+	}
+}
 ?>

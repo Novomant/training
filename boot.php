@@ -1,21 +1,10 @@
 <?php
-class index
-{
-	function outIndex()
-	{
-		include 'index.php';
-	}
-}
-echo $_SERVER['REQUEST_URI'];
-$objIndex = new index();
+include 'module/indexClass.php';
 $url = $_SERVER['REQUEST_URI'];
+
 if ($url=='/training/')
 {
-	$objIndex->outIndex();
+	$obj = new Index();
+	$obj->loadPageIndex();
 }
-if ($url=='/training/today.php')
-{
-	include 'indexClass.php';
-}
-
 ?>

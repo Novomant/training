@@ -2,4 +2,4 @@ AddDefaultCharset UTF-8
 
 RewriteEngine On
 RewriteCond %{SCRIPT_FILENAME} !-f
-RewriteRule .* boot.php
+RewriteRule .* boot.php [NE,L]
