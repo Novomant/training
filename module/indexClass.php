@@ -9,14 +9,20 @@ class Index
 
 class BaseWeather
 {
-	public $town='test';
-}
+	public function GetData()
+	{
+		if (isset($_REQUEST['ok']))
+		{
+			echo "Кнопка нажата";
+		}
+	}
 
+}
 class WeatherToday extends BaseWeather
 {
 	public function InputValue()
 	{
-	parent::InputTown();
+	parent::GetData();
 	}
 }
 ?>

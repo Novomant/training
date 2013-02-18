@@ -19,14 +19,9 @@
 				</form>
 <?php
 include 'module/indexClass.php';
-
-if (isset($_REQUEST['ok']))
-{
-	//Создаем базовые и дневные классы погоды
-	$objBaseWeather = new BaseWeather();
-	echo $objBaseWeather->town;
-}
-
+//Создаем базовые и дневные классы погоды
+$objBaseWeather = new BaseWeather();
+$objBaseWeather->GetData();
 ?>
 	</body>
 </html>
