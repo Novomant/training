@@ -19,9 +19,7 @@
 				</form>
 <?php
 include 'module/indexClass.php';
-//Создаем базовые и дневные классы погоды
-$objBaseWeather = new BaseWeather();
-$objBaseWeather->GetData();
+
 ?>
 	</body>
 </html>
