@@ -7,12 +7,12 @@
 		<h1 align="center">Узнай погоду на завтра в своем городе</h1>
 			<p>Завтра
 				<?php
-				$dateTomorrow=new DateTime('+1 days');
+				$dateTomorrow = new DateTime('+1 days');
 				$dateTomorrowString=date_format($dateTomorrow, 'Y-m-d');
 				echo $dateTomorrowString;
 				?>
 			</p>
-				<form method="POST" action="tomorrow.php">
+				<form method="POST" action="weather_tomorrow.php">
 					Укажите ваш город: <input type="text" name="town">
 					<br><br>
 					<input type="submit" name="ok" value="Отправить">

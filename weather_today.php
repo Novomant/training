@@ -7,18 +7,18 @@
 		<h1 align="center">Узнай погоду на сегодня в своем городе</h1>
 			<p>Сегодня
 				<?php
-				$dateToday=new DateTime();
-				$dateTodayString=date_format($dateToday, 'Y-m-d');
+				$dateToday = new DateTime();
+				$dateTodayString = date_format($dateToday, 'Y-m-d');
 				echo $dateTodayString;
 				?>
 			</p>
-				<form method="POST" action="today.php">
+				<form method="POST" action="weather_today.php">
 					Укажите ваш город: <input type="text" name="town">
 					<br><br>
 					<input type="submit" name="ok" value="Отправить">
 				</form>
 <?php
-include 'module/indexClass.php';
+
 
 ?>
 	</body>
