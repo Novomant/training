@@ -1,31 +1,29 @@
 <?php
 include 'module/Class.php';
 
-//Массив $_POST должен содержать только пользовательские данные, поэтому удаляем $_REQUEST['ok']
+//Загружаем запрошенную страницу
+if  ($_SERVER['REQUEST_URI'] == "/training/")
+	{
+		include "index.php";
+	}
+	if ($_SERVER['REQUEST_URI'] !="/training/")
+	{
+		$loadPage = ltrim($_SERVER['REQUEST_URI'], "/training/");
+		include $loadPage;
+	}
+
 if (isset ($_REQUEST['ok']))
 {
-	$delOk = array_search("Отправить", $_POST);
-	if ($delOk !== false)
-	{
-		unset ($_POST[$delOk]);
-	}
-	$valueUser = $_POST;
-	//Выбираем класс, в зависимости от того, какой запрос сделал пользователь
-	if (isset($_POST['town']) and isset($_POST['date']))
-	{
-		$worker = new Weather_Day($valueUser);
-	}
-	if (isset($dateToday))
-	{
-		$worker = new Weather_Today($valueUser);
-	}
-	if (isset($dateTomorrow))
-	{
-		$worker = new Weather_Tomorrow($valueUser);
-	}
+	//Сохраняем данные пользователя в переменные
+	$town = $_POST['town'];
+	$date = $_POST['date'];
+
+	//Выбираем загружаемый класс
+	$loadClass = rtrim($loadPage, ".php");
+	$loadClass = ucfirst($loadClass);
+	$work = new $loadClass;
+	$work->setTown($town);
 }
 
-//Класс загрузки страниц в зависимости от запроса в url
-$loadPage = new Index();
-$loadPage->loadPage();
+
 ?>
