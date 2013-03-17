@@ -1,5 +1,4 @@
 AddDefaultCharset UTF-8
-
 RewriteEngine On
-RewriteCond %{SCRIPT_FILENAME} !-f
+RewriteBase /training/
 RewriteRule .* boot.php [NE,L]
