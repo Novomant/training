@@ -39,8 +39,6 @@ class BaseWeather extends Base
 {
 	public $town;
 	public $date;
-	public $isWorkServer;
-	public $servers;
 
 	public function setTown($town)
 	{
@@ -68,39 +66,50 @@ class BaseWeather extends Base
 	}
 
 	//Проверяем, работает ли Мемкэш
-	public function testMemcache()
+	public function isWorkServer()
 	{
-		if (!class_exists('Memcache'))
-		{
-			return $this->isWorkServer=false;
-		}
-		else
-		{
-			return $this->isWorkServer=true;
-		}
+		return class_exists('Memcache');
 	}
 
-	//Если Мемкэш работает, запускаем его, подключаем список серверов
+	//Если Мемкэш работает, подключаем список серверов
 	public function loadServers()
 	{
-		if ($this->isWorkServer)
+		if ($this->isWorkServer())
 		{
-			$memcache = new Memcache;
 			//Подключаем список серверов
 			include 'servers.php';
 			$this->servers = $servers;
-			//Подключаемся к каждому серверу по очереди. Если данные ключа заполнились или достигнут последний элемент массива, то прерываем цикл
-			for ($this->curr = reset($this->servers); !empty($this->curr) && empty($this->info); $this->curr = next($this->servers))
-			{
-				$memcache -> connect($this->curr, 11211);
-				$this->info = $memcache -> get($this->getTown().$this->getDate());
-			}
 		}
-
 	}
+
+			//Подключаемся к каждому серверу по очереди. Если данные ключа заполнились или достигнут последний элемент массива, то прерываем цикл
+	public function connect()
+	{
+		$memcache = new Memcache;
+		for ($this->curr = reset($this->servers); !empty($this->curr) && empty($this->info); $this->curr = next($this->servers))
+		{
+			$memcache -> connect($this->curr, 11211);
+			$this->info = $memcache -> get($this->getTown().$this->getDate());
+		}
+	}
+
+	//Разбираем дату на части
+	public function separationDate()
+	{
+		if (!$this->isWorkServer() or !$this->info)
+		{
+			$this->del = explode("-", $this->date);
+			// Распределяем по переменным
+			list ($this->year, $this->month, $this->day) = $this->del;
+		}
+	}
+
+
+
 }
 class Weather_day extends BaseWeather
 {
+
 	public  function __construct()
 	{
 		parent::__construct();
@@ -114,16 +123,43 @@ class Weather_day extends BaseWeather
 					</form>';
 	}
 
+	public function isIncorrectDate()
+	{
+		//Создаем объект с исключением (если объект не создался) - фиксируем ошибку
+		try
+		{
+			$this->dateUser = new DateTime($this->getDate());
+			$this->isErrorIncorrectDate=false;
+		}
+		catch (Exception $e)
+		{
+			$this->isErrorIncorrectDate=true;
+		}
+		return $this->isIncorrectDate();
+	}
+
+	//Создаем объект с текущей датой
+	public function createObjectDate()
+	{
+		//Объект с текущей датой
+		$this->dateToday = new DateTime();
+		date_time_set($this->dateToday, 00, 00, 00);
+		//Добавляем к текущей дате 7 дней
+		$this->date7 = new DateTime('+7 days');
+	}
+
 	public function setRequestMode()
 	{
 		echo "Нажатие кнопки. Перед установкой города и даты<br>";
+		parent::loadServers();
+		parent::connect();
+		parent::separationDate();
 	}
+
 	public function doOutput()
 	{
 		echo "Данные после обработки<br>";
-		parent::testMemcache();
-		parent::loadServers();
-		var_dump( $this->servers);
+		var_dump($this->isIncorrectDate());
 
 	}
 }
