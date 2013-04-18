@@ -26,7 +26,8 @@ if (isset ($_REQUEST['ok']) && ($work instanceOf BaseWeather))
 		{
 				$work->setDate($_POST['date']);
 		}
+	$work->doOutput();
 }
 
-$work->doOutput();
+
 ?>
