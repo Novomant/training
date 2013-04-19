@@ -220,6 +220,27 @@ class BaseWeather extends Base
 			echo "<br>Минимальная температура в этот день: ".$this->info["t_min"];
 		}
 	}
+
+	public function setRequestMode()
+	{
+
+	}
+
+	public function doOutput()
+	{
+		if (isset ($_REQUEST['ok']))
+		{
+			$this->isWorkServer();
+			$this->loadServers();
+			$this->connect();
+			$this->loadApi();
+			$this->decodeJson();
+			$this->decodeXml();
+			$this->printError();
+			$this->saveInServer();
+			$this->printInfo();
+		}
+	}
 }
 class Weather_day extends BaseWeather
 {
@@ -236,61 +257,72 @@ class Weather_day extends BaseWeather
 					</form>';
 	}
 
-	//Создаем объект с текущей датой
-	public function isErrorInDate()
-	{
-		//Добавляем к текущей дате 7 дней
-		$date7 = new DateTime('+7 days');
-		date_time_set($date7, 00, 00, 00);
-		$dateToday = new DateTime();
-		date_time_set ($dateToday, 00, 00, 00);
-		$nowDate = new DateTime();
-		//Если полученная дата не входит в недельный интервал
-		if ($this->getDate() <= $date7 and $this->getDate() >= $dateToday)
-			{
-				$this->isErrorDate = false;
-			}
-			else
-			{
-				$this->isErrorDate = true;;
-			}
-		//Если пользователь ничего не ввел в поле даты
-		if ($this->getDate() == $nowDate)
-		{
-			$this->isErrorDate = true;
-		}
-	}
-
-	public function setRequestMode()
-	{
-
-	}
-
-	public function doOutput()
-	{
-		#var_dump($this->getDate());
-		parent::isWorkServer();
-		parent::loadServers();
-		parent::connect();
-		$this->isErrorInDate();
-		parent::loadApi();
-		parent::decodeJson();
-		parent::decodeXml();
-		parent::printError();
-		parent::saveInServer();
-		#$this->memcache->flush();
-		parent::printInfo();
-		#var_dump($this->isErrorDate);
-		#var_dump($this->isErrorXML);
-		#var_dump($this->isErrorIncorrectDate);
-	}
+    //Создаем объект с текущей датой
+    public function setDate($date)
+    {
+        parent::setDate($date);
+        // Если дата ошибочна дальнейшие проверки бессмысленны
+        if ($this->isErrorIncorrectDate) {
+            return;
+        }
+        //Добавляем к текущей дате 7 дней
+        $date7 = new DateTime('+7 days');
+        date_time_set($date7, 00, 00, 00);
+        $dateToday = new DateTime();
+        date_time_set ($dateToday, 00, 00, 00);
+        $nowDate = new DateTime();
+        //Если полученная дата не входит в недельный интервал
+        if ($this->getDate() <= $date7 and $this->getDate() >= $dateToday)
+        {
+        	$this->isErrorDate = false;
+        }
+        else
+        {
+        	$this->isErrorDate = true;
+        }
+        //Если пользователь ничего не ввел в поле даты
+        if ($this->getDate() == $nowDate)
+        {
+        	$this->isErrorDate = true;
+        }
+    }
 }
 
 class Weather_today extends BaseWeather
 {
+	public  function __construct()
+    {
+    	parent::__construct();
+    	echo '<h1 align="center">Узнай погоду на сегодня и в любом городе</h1>
+    				<form method="POST" action="weather_today.php">
+    					Город: <input type="text" name="town">
+    					<br><br>
+    					<input type="submit" name="ok" value="Отправить">
+    				</form>';
+    }
+
+    public function getDate()
+    {
+        return new DateTime();
+    }
 }
 
 class Weather_tomorrow extends BaseWeather
 {
+    public  function __construct()
+    {
+    	parent::__construct();
+    	echo '<h1 align="center">Узнай погоду на завтра в любом городе</h1>
+    				<form method="POST" action="weather_tomorrow.php">
+    					Город: <input type="text" name="town">
+    					<br><br>
+    					<input type="submit" name="ok" value="Отправить">
+    				</form>';
+    }
+
+    public function getDate()
+    {
+        return new DateTime('+1 day');
+    }
 }
 ?>
