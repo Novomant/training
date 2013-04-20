@@ -42,6 +42,7 @@ class BaseWeather extends Base
 	public $isErrorIncorrectDate = false;
 	public $isErrorDate = false;
 	public $isErrorXML = false;
+	public $requestUser = false;
 
 	public function setTown($town)
 	{
@@ -223,12 +224,12 @@ class BaseWeather extends Base
 
 	public function setRequestMode()
 	{
-
+		$this->requestUser = true;
 	}
 
 	public function doOutput()
 	{
-		if (isset ($_REQUEST['ok']))
+		if ($this->requestUser)
 		{
 			$this->isWorkServer();
 			$this->loadServers();
